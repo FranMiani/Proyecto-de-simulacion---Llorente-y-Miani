@@ -1,4 +1,11 @@
-from ..xdevs.models import Atomic, Port
+import matplotlib.pyplot as plt
+import sys
+import os
+
+# 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
+ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(ruta_padre)
+from xdevs.models import Atomic, Port
 import random
 
 class ControladorBomba(Atomic):
@@ -10,13 +17,24 @@ class ControladorBomba(Atomic):
 
         self.i_orden_medica = Port(float, "i_orden_medica")
         self.i_sensor_flujo = Port(float, "i_sensor_flujo")
-        self.i_fin_bolsa = Port(str, "i_fin_bolsa")
+        self.i_fin_bolsa = Port(bool, "i_fin_bolsa")
         self.i_confirmacion= Port(str, "i_confirmacion")
+
+        self.add_in_port(self.i_orden_medica)
+        self.add_in_port(self.i_sensor_flujo)
+        self.add_in_port(self.i_fin_bolsa)
+        self.add_in_port(self.i_confirmacion)
 
         self.o_ajustar_caudal = Port(float, "o_ajustar_caudal")
         self.o_detener_bomba = Port(str, "i_detener_bomba")
         self.o_alarma = Port(str, "o_alarma")
         self.o_registrar_evento = Port(str, "o_registrar_evento")
+
+        self.add_out_port(self.o_ajustar_caudal)
+        self.add_out_port(self.o_detener_bomba)
+        self.add_out_port(self.o_alarma)
+        self.add_out_port(self.o_registrar_evento)
+
 
         self.fase = "ESPERANDO"
         self.estado_bolsa = "ACEPTABLE"
@@ -64,6 +82,7 @@ class ControladorBomba(Atomic):
             self.sigma_bolsa -= e
             ran = random.uniform(0, 3)  #Retardo aleatorio entre la orden y su procesamiento
             self.sigma = ran
+            self.caudal_indicado = self.i_orden_medica.get()
             self.aux()
         elif self.i_sensor_flujo:
             if(self.fase == "INFUNDIENDO" and abs (self.i_sensor_flujo.get() - self.caudal_indicado) > (0.1 * self.caudal_indicado)):   #Desvio significativo si > 10%
@@ -80,16 +99,20 @@ class ControladorBomba(Atomic):
                 self.sigma -= e
                 self.aux()
         elif self.i_fin_bolsa:
-            self.sigma_bolsa = 0
+            self.sigma_bolsa = 60
             self.sigma -= e
             self.aux()
         elif self.i_confirmacion:
             if self.fase == "DETENIDO_POR_CRITICA":
                 self.fase = "ESPERANDO"
+                self.sigma_bolsa = float('inf')
+                self.sigma = float('inf')
                 self.passivate()
             else:
                 self.fase = "PROCESANDO_ORDEN"
                 self.estado_bolsa = "ACEPTABLE"
+                self.sigma_bolsa = float('inf')
+                self.sigma = float('inf')
                 self.activate()
         else:
             self.sigma_bolsa -= e
@@ -97,6 +120,7 @@ class ControladorBomba(Atomic):
             self.aux()
 
     def lambdaf(self):
+        print(f"Disparando salida desde: {self.name}")
         if self.fase == "PROCESANDO_ORDEN" and self.caudal_indicado > 0:
             self.o_ajustar_caudal.add(self.caudal_indicado)
         if self.fase == "PROCESANDO_ORDEN" and self.caudal_indicado == 0:

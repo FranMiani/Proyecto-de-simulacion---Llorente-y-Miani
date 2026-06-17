@@ -1,15 +1,21 @@
-from xdevs.py.xdevs.models import Atomic, Port
+import matplotlib.pyplot as plt
+import sys
+import os
 
-class GeneradorOrdenesMedicas(Atomic):
-    def __init__(self, name="GeneradorOrdenesMedicas"):
+# 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
+ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(ruta_padre)
+from xdevs.models import Atomic, Port
+class ModuloAlarmas(Atomic):
+    def __init__(self, name="ModuloAlarmas"):
         super().__init__(name)
 
-        self.Alarma = Port(str, "Alarma")
-        self.confirmacionEnfermero = Port(str, "confirmacionEnfermero")
-        self.notificacionAlarma = Port(str, "notificacionAlarma")
-        self.add_in_port(self.Alarma)
-        self.add_in_port(self.confirmacionEnfermero)
-        self.add_out_port(self.notificacionAlarma)
+        self.i_alarma = Port(str, "i_alarma")
+        self.i_confirmacionEnfermero = Port(str, "i_confirmacionEnfermero")
+        self.o_notificacionAlarma = Port(str, "o_notificacionAlarma")
+        self.add_in_port(self.i_alarma)
+        self.add_in_port(self.i_confirmacionEnfermero)
+        self.add_out_port(self.o_notificacionAlarma)
         self.fase = "REPOSO"
         self.tipo = "NINGUNA"
 
@@ -42,16 +48,17 @@ class GeneradorOrdenesMedicas(Atomic):
             
 
     def deltext(self, e):
-        if self.Alarma:
+        if self.i_alarma:
             self.fase = "NOTIFICAR_NUEVA"
-            self.tipo = self.Alarma.get()
+            self.tipo = self.i_alarma.get()
             self.hold_in("active", 0)
-        if self.confirmacionEnfermero:
+        if self.i_confirmacionEnfermero:
             self.fase = "REPOSO"
             self.tipo = "NINGUNA"
             self.passivate()
         self.continuef(e)
 
     def lambdaf(self):
-        self.notificacionAlarma.add(self.tipo)
+        print(f"Disparando salida desde: {self.name}")
+        self.o_notificacionAlarma.add(self.tipo)
 
