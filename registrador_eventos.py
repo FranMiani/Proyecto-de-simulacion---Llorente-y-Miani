@@ -10,11 +10,12 @@ class RegistradorEventos(Atomic):
     def __init__(self, name="RegistradorEventos"):
         super().__init__(name)
 
-        
+        self.i_caudal_real = Port(float, "i_caudal_real")
         self.i_ajustar_caudal = Port(float, "i_ajustarCaudal")
         self.i_detener_bomba = Port(str, "i_detenerBomba")
         self.i_alarma = Port(str, "i_alarma")
 
+        self.add_in_port(self.i_caudal_real)
         self.add_in_port(self.i_ajustar_caudal)
         self.add_in_port(self.i_detener_bomba)
         self.add_in_port(self.i_alarma)
@@ -31,6 +32,8 @@ class RegistradorEventos(Atomic):
         self.historial_valores_caudal = []
         self.historial_tiempos_alarma = []
         self.historial_valores_alarma = []
+        self.historial_tiempos_caudal_real = []
+        self.historial_valores_caudal_real = []
 
     def initialize(self):
         self.mensaje = ""
@@ -78,6 +81,16 @@ class RegistradorEventos(Atomic):
             
             self.hold_in("active", 0.0)
 
+        elif self.i_caudal_real:
+            valor = self.i_caudal_real.get()
+        
+            self.historial_tiempos_caudal_real.append(self.reloj_global)
+            self.historial_valores_caudal_real.append(valor)
+        
+            self.mensaje = f"Caudal real: {valor}"
+        
+            self.hold_in("active", 0.0)
+        
         else:
             # Equivalente a: case s = (mensaje, sigma - e)
             if self.sigma != float('inf'):

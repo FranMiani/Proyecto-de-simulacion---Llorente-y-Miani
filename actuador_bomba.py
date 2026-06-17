@@ -1,3 +1,4 @@
+import random
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -31,14 +32,15 @@ class ActuadorDeBomba(Atomic):
 
     def deltext(self, e):
         if self.i_ajustar_caudal:
-            self.caudal_objetivo = self.i_ajustar_caudal.get()
+            error = random.uniform(-0.05, 0.05) #introducimos un error de entre -5% y 5% en el actuador
+            self.caudal_objetivo = self.i_ajustar_caudal.get() * (1 + error)
     
         if self.i_detener_bomba:
             self.caudal_objetivo = 0.0  #caudal = 0 representa la bomba detenida
 
         self.hold_in("active", 0.5) #0.5 segundos de latencia
 
-    def lambdaf(self):
+    def lambdaf(self):        
         print(f"Disparando salida desde: {self.name}")
         self.o_caudal_actual.add(self.caudal_objetivo)
 

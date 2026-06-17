@@ -50,6 +50,7 @@ class SistemaBombaCompleto(Coupled):
         self.add_coupling(self.controlador.o_ajustar_caudal, self.registrador.i_ajustar_caudal)
         self.add_coupling(self.controlador.o_detener_bomba, self.registrador.i_detener_bomba)
         self.add_coupling(self.controlador.o_alarma, self.registrador.i_alarma)
+        self.add_coupling(self.bomba.o_caudal_actual,self.registrador.i_caudal_real)
 
         # 5. Salidas Cotrolador 
         self.add_coupling(self.controlador.o_alarma, self.alarma.i_alarma)
@@ -86,6 +87,11 @@ if __name__ == '__main__':
     t_alarma = modelo_top.registrador.historial_tiempos_alarma
     v_alarma = modelo_top.registrador.historial_valores_alarma
 
+    t_indicado = modelo_top.registrador.historial_tiempos_caudal
+    v_indicado = modelo_top.registrador.historial_valores_caudal
+    t_real = modelo_top.registrador.historial_tiempos_caudal_real
+    v_real = modelo_top.registrador.historial_valores_caudal_real
+
     # --- ZONA DE GRÁFICOS (Matplotlib) ---
     # Creamos una figura con 2 subgráficos compartiendo el eje X (tiempo)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
@@ -115,4 +121,26 @@ if __name__ == '__main__':
 
     # Ajustamos márgenes y mostramos la ventana
     plt.tight_layout()
+    plt.show()
+
+    # ========= SEGUNDA FIGURA =========
+    plt.figure(figsize=(10,6))
+    
+    plt.step(t_indicado, v_indicado,
+             where='post',
+             linewidth=2,
+             label='Caudal indicado')
+    
+    plt.step(t_real, v_real,
+             where='post',
+             linewidth=2,
+             linestyle='--',
+             label='Caudal real')
+    
+    plt.title("Caudal indicado vs caudal real")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Caudal (ml/h)")
+    plt.grid(True)
+    plt.legend()
+    
     plt.show()
