@@ -16,7 +16,7 @@ class Enfermero(Atomic):
         self.o_confirmacion= Port(str, "o_confirmacion")
         self.add_out_port(self.o_confirmacion)
         self.add_in_port(self.i_notificacionAlarma)
-        self.sigma =  self.sigma = float('inf')
+        self.sigma = float('inf')
 
     def initialize(self):
         self.passivate()
@@ -25,6 +25,7 @@ class Enfermero(Atomic):
         pass
 
     def deltint(self):
+        self.sigma = float('inf')
         self.passivate()
 
     def deltext(self, e):
