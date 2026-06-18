@@ -28,11 +28,13 @@ class ControladorBomba(Atomic):
         self.o_detener_bomba = Port(str, "i_detener_bomba")
         self.o_alarma = Port(str, "o_alarma")
         self.o_registrar_evento = Port(str, "o_registrar_evento")
+        self.o_desvio_corregido = Port(bool, "o_desvio_corregido")
 
         self.add_out_port(self.o_ajustar_caudal)
         self.add_out_port(self.o_detener_bomba)
         self.add_out_port(self.o_alarma)
         self.add_out_port(self.o_registrar_evento)
+        self.add_out_port(self.o_desvio_corregido)
 
         self.fase = FaseControlador.ESPERANDO
         self.estado_bolsa = EstadoBolsa.ACEPTABLE
@@ -40,6 +42,7 @@ class ControladorBomba(Atomic):
         self.caudal_real = 0.0
         self.sigma_bolsa = 0.0
         self.sigma = 0.0
+        self.desvio_corregido = False
         
     def initialize(self):
         self.passivate()
@@ -96,8 +99,15 @@ class ControladorBomba(Atomic):
                 self.sigma_bolsa -= e
                 self.sigma = 0.0
                 self.aux()
+                self.o_desvio_corregido.add(False)
                 
             if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.INFUNDIENDO] and desvio_actual <= desvio_limite:
+                if self.fase in [
+                        FaseControlador.EVALUANDO_CRITICA,
+                        FaseControlador.EVALUANDO_DESVIO]:
+                
+                    self.desvio_corregido = True
+                
                 self.fase = FaseControlador.INFUNDIENDO
                 self.sigma_bolsa -= e
                 self.passivate()
@@ -131,6 +141,8 @@ class ControladorBomba(Atomic):
             self.aux()
 
     def lambdaf(self):
+        if self.desvio_corregido:
+            self.o_desvio_corregido.add(True)
         if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado > 0:
             self.o_ajustar_caudal.add(float(self.caudal_indicado))
         if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado == 0:

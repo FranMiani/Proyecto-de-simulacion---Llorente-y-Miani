@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import sys
 import os
 from parametros import NivelAlarma
+import numpy as np
+
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Coupled, Port
@@ -51,6 +53,7 @@ class SistemaBombaCompleto(Coupled):
         self.add_coupling(self.controlador.o_detener_bomba, self.registrador.i_detener_bomba)
         self.add_coupling(self.controlador.o_alarma, self.registrador.i_alarma)
         self.add_coupling(self.bomba.o_caudal_actual,self.registrador.i_caudal_real)
+        self.add_coupling(self.controlador.o_desvio_corregido, self.registrador.i_desvio_corregido)
 
         # 5. Salidas Cotrolador 
         self.add_coupling(self.controlador.o_alarma, self.alarma.i_alarma)
@@ -63,7 +66,7 @@ class SistemaBombaCompleto(Coupled):
         # 7. Enfermero a Bolsa y Controlador
         self.add_coupling(self.enfermero.o_confirmacion, self.controlador.i_confirmacion)
         self.add_coupling(self.enfermero.o_confirmacion, self.bolsa.i_confirmacion)
-        
+        self.add_coupling(self.enfermero.o_confirmacion, self.registrador.i_confirmacion)
         # 8. Actuador a Sensor
         self.add_coupling(self.bomba.o_caudal_actual, self.sensor.i_caudalActual)
         
@@ -91,6 +94,25 @@ if __name__ == '__main__':
     v_indicado = modelo_top.registrador.historial_valores_caudal
     t_real = modelo_top.registrador.historial_tiempos_caudal_real
     v_real = modelo_top.registrador.historial_valores_caudal_real
+    
+    resp_desvio = modelo_top.registrador.tiempos_respuesta_desvio
+    resp_bolsa = modelo_top.registrador.tiempos_respuesta_bolsa
+
+    if resp_desvio and resp_bolsa:
+        print("\n================ RESUMEN ================")
+        print(f"{'Evento':<20}{'Media':>10}{'Min':>10}{'Max':>10}{'Std':>10}")
+        
+        print(f"{'Desvío':<20}"
+              f"{np.mean(resp_desvio):10.2f}"
+              f"{np.min(resp_desvio):10.2f}"
+              f"{np.max(resp_desvio):10.2f}"
+              f"{np.std(resp_desvio):10.2f}")
+        
+        print(f"{'Fin de bolsa':<20}"
+              f"{np.mean(resp_bolsa):10.2f}"
+              f"{np.min(resp_bolsa):10.2f}"
+          f"{np.max(resp_bolsa):10.2f}"
+          f"{np.std(resp_bolsa):10.2f}")
 
     # --- ZONA DE GRÁFICOS (Matplotlib) ---
     # Creamos una figura con 2 subgráficos compartiendo el eje X (tiempo)

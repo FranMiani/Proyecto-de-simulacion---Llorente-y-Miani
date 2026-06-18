@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
+from parametros import NivelAlarma
 
 # 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -14,11 +15,16 @@ class RegistradorEventos(Atomic):
         self.i_ajustar_caudal = Port(float, "i_ajustarCaudal")
         self.i_detener_bomba = Port(str, "i_detenerBomba")
         self.i_alarma = Port(str, "i_alarma")
+        self.i_confirmacion = Port(str, "i_confirmacion")
+        self.i_desvio_corregido = Port(bool,"i_desvio_corregido")
 
         self.add_in_port(self.i_caudal_real)
         self.add_in_port(self.i_ajustar_caudal)
         self.add_in_port(self.i_detener_bomba)
         self.add_in_port(self.i_alarma)
+        self.add_in_port(self.i_confirmacion)
+        self.add_in_port(self.i_desvio_corregido)
+        
         self.o_registro = Port(str, "o_registro")
 
         self.add_out_port(self.o_registro)
@@ -34,6 +40,12 @@ class RegistradorEventos(Atomic):
         self.historial_valores_alarma = []
         self.historial_tiempos_caudal_real = []
         self.historial_valores_caudal_real = []
+        
+        self.t_ultima_alarma_media = None
+        self.tiempos_respuesta_desvio = []
+        self.t_ultima_alarma_baja = None
+        self.tiempos_respuesta_bolsa = []
+        
 
     def initialize(self):
         self.mensaje = ""
@@ -61,7 +73,7 @@ class RegistradorEventos(Atomic):
             
             self.hold_in("active", 0.0) # Transición inmediata (sigma = 0)
 
-        elif self.i_detener_bomba:
+        if self.i_detener_bomba:
             self.mensaje = "Detencion de bomba"
             
             # Si se detiene la bomba, el caudal cae a cero
@@ -70,9 +82,15 @@ class RegistradorEventos(Atomic):
             
             self.hold_in("active", 0.0)
 
-        elif self.i_alarma:
+        if self.i_alarma:
             nivel = self.i_alarma.get()
             self.mensaje = f"Alarma: {nivel}"
+
+            if nivel == NivelAlarma.MEDIA.value:
+                self.t_ultima_alarma_media = self.reloj_global
+            
+            if nivel == NivelAlarma.BAJA.value:
+                self.t_ultima_alarma_baja = self.reloj_global
             
             # Guardamos el nivel de alarma y el tiempo exacto
             self.historial_tiempos_alarma.append(self.reloj_global)
@@ -80,7 +98,7 @@ class RegistradorEventos(Atomic):
             
             self.hold_in("active", 0.0)
 
-        elif self.i_caudal_real:
+        if self.i_caudal_real:
             valor = self.i_caudal_real.get()
         
             self.historial_tiempos_caudal_real.append(self.reloj_global)
@@ -89,6 +107,20 @@ class RegistradorEventos(Atomic):
             self.mensaje = f"Caudal real: {valor}"
         
             self.hold_in("active", 0.0)
+
+        if self.i_confirmacion:
+            if self.t_ultima_alarma_baja is not None:
+        
+                tiempo = (self.reloj_global - self.t_ultima_alarma_baja)
+                self.tiempos_respuesta_bolsa.append(tiempo)
+                self.t_ultima_alarma_baja = None
+                
+        if self.i_desvio_corregido:
+            if self.t_ultima_alarma_media is not None:
+
+                tiempo = (self.reloj_global - self.t_ultima_alarma_media)
+                self.tiempos_respuesta_desvio.append(tiempo)
+                self.t_ultima_alarma_media = None
         
         
     def lambdaf(self):
