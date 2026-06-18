@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
-
+from parametros import NivelAlarma
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Coupled, Port
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     # Ejecutamos la simulación
     print("--- INICIANDO SIMULACIÓN ---")
     coordinador.initialize()
-    coordinador.simulate_time(20000) 
+    coordinador.simulate_time(10000) 
     print("--- SIMULACIÓN FINALIZADA ---")
 
     # Extraemos las listas de datos guardadas en el Registrador
@@ -102,13 +102,10 @@ if __name__ == '__main__':
     ax1.set_title("Ajustes de Caudal de la Bomba")
     ax1.set_ylabel("Caudal (ml/h)")
     ax1.grid(True, linestyle='--', alpha=0.7)
-
-    # Panel 2: Gráfico de Alarmas
     if len(t_alarma) > 0:
-        # Usamos scatter para poner puntos exactos donde saltó una alarma
         ax2.scatter(t_alarma, v_alarma, color='red', s=100, zorder=5)
-        # Forzamos el orden del eje Y para que tenga sentido visual
-        ax2.set_yticks(["BAJA", "MEDIA", "CRITICA"])
+        # Usamos los Enums para garantizar consistencia visual
+        ax2.set_yticks([NivelAlarma.BAJA.value, NivelAlarma.MEDIA.value, NivelAlarma.CRITICA.value])
     else:
         ax2.text(0.5, 0.5, 'Sin alarmas registradas en este lapso', 
                  horizontalalignment='center', verticalalignment='center', 

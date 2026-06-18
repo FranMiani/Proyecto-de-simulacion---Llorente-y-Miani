@@ -2,8 +2,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
-
-# 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
+from parametros import Params
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Atomic, Port
@@ -25,7 +24,7 @@ class SensorDeFlujo(Atomic):
         pass
 
     def deltint(self):
-        self.hold_in("active", 1)
+        self.hold_in("active", Params.SENSOR_PERIODO_MUESTREO)
 
     def deltext(self, e):
         self.caudal_medido = self.i_caudalActual.get()

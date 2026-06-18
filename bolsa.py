@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
-
+from parametros import Params
 # 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
@@ -15,7 +15,7 @@ class Bolsa(Atomic):
         self.o_finBolsa = Port(bool, "o_finBolsa")
         self.add_out_port(self.o_finBolsa)
         self.add_in_port(self.i_confirmacion)
-        self.duracionBolsa = random.uniform(6000.0, 20000.0)
+        self.duracionBolsa = Params.generar_duracion_bolsa()
 
     def initialize(self):
         self.hold_in("active", self.duracionBolsa)
@@ -28,7 +28,7 @@ class Bolsa(Atomic):
 
     def deltext(self, e):
         if self.i_confirmacion:
-            self.duracionBolsa = random.uniform(6000, 20000)
+            self.duracionBolsa = Params.generar_duracion_bolsa()
             self.hold_in("active", self.duracionBolsa)
 
     def lambdaf(self):

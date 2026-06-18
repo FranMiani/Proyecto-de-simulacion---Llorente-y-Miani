@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
-
+from parametros import Params
 # 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
@@ -32,11 +32,11 @@ class Enfermero(Atomic):
         if self.i_notificacionAlarma:
             alarma = self.i_notificacionAlarma.get()
             if alarma=="BAJA" and self.sigma== float('inf'):
-                self.sigma = random.uniform(30,90)
-            elif alarma=="CRIITICA" and self.sigma== float('inf'):
-                self.sigma = random.uniform(5,10)
-            elif alarma=="CRIITICA" and self.sigma != float('inf'):
-                self.sigma = min(self.sigma - e,random.uniform(5,10))
+                self.sigma = Params.generar_tiempo_enfermero_baja()
+            elif alarma=="CRITICA" and self.sigma== float('inf'):
+                self.sigma = Params.generar_tiempo_enfermero_critica()
+            elif alarma=="CRITICA" and self.sigma != float('inf'):
+                self.sigma = min(self.sigma - e,Params.generar_tiempo_enfermero_critica())
             elif self.sigma != float('inf'):
                 self.sigma = self.sigma - e
         if self.sigma != float('inf'):

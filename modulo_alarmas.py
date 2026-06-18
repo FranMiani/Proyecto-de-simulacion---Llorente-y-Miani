@@ -1,11 +1,9 @@
-import matplotlib.pyplot as plt
 import sys
 import os
-
-# 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Atomic, Port
+from parametros import FaseAlarma, NivelAlarma, Params
 class ModuloAlarmas(Atomic):
     def __init__(self, name="ModuloAlarmas"):
         super().__init__(name)
@@ -16,49 +14,40 @@ class ModuloAlarmas(Atomic):
         self.add_in_port(self.i_alarma)
         self.add_in_port(self.i_confirmacionEnfermero)
         self.add_out_port(self.o_notificacionAlarma)
-        self.fase = "REPOSO"
-        self.tipo = "NINGUNA"
+        
+        self.fase = FaseAlarma.REPOSO
+        self.tipo = NivelAlarma.NINGUNA
 
     def initialize(self):
         self.passivate()
 
-    def exit(self):
-        pass
+    def exit(self): pass
 
     def deltint(self):
-        if (self.fase == "NOTIFICAR_NUEVA" and self.tipo != "CRITICA"):
-            self.fase="REPOSO"
-            self.tipo="NINGUNA"
+        if self.fase == FaseAlarma.NOTIFICAR_NUEVA and self.tipo != NivelAlarma.CRITICA:
+            self.fase = FaseAlarma.REPOSO
+            self.tipo = NivelAlarma.NINGUNA
             self.passivate()
-        else:
-            if self.fase == "NOTIFICAR_NUEVA" and self.tipo == "CRITICA":
-                self.fase="ESPERANDO_30"
-                self.tipo="CRITICA"
-                self.hold_in("active", 30)
-            else:
-                if self.fase == "ESPERANDO_30" and self.tipo == "CRITICA":
-                    self.fase="ESPERANDO_10"
-                    self.tipo="CRITICA"
-                    self.hold_in("active", 10)
-                else:
-                    if self.fase == "ESPERANDO_10" and self.tipo == "CRITICA":
-                        self.fase="ESPERANDO_10"
-                        self.tipo="CRITICA"
-                        self.hold_in("active", 10)
+        elif self.fase == FaseAlarma.NOTIFICAR_NUEVA and self.tipo == NivelAlarma.CRITICA:
+            self.fase = FaseAlarma.ESPERANDO_30
+            self.hold_in("active", Params.ALARMA_ESPERA_INICIAL)
+        elif self.fase == FaseAlarma.ESPERANDO_30 and self.tipo == NivelAlarma.CRITICA:
+            self.fase = FaseAlarma.ESPERANDO_10
+            self.hold_in("active", Params.ALARMA_ESPERA_REPETICION)
+        elif self.fase == FaseAlarma.ESPERANDO_10 and self.tipo == NivelAlarma.CRITICA:
+            self.hold_in("active", Params.ALARMA_ESPERA_REPETICION)
             
-
     def deltext(self, e):
         if self.i_alarma:
-            self.fase = "NOTIFICAR_NUEVA"
-            self.tipo = self.i_alarma.get()
+            self.fase = FaseAlarma.NOTIFICAR_NUEVA
+            self.tipo = NivelAlarma(self.i_alarma.get()) 
             self.hold_in("active", 0)
-        if self.i_confirmacionEnfermero:
-            self.fase = "REPOSO"
-            self.tipo = "NINGUNA"
+        elif self.i_confirmacionEnfermero:
+            self.fase = FaseAlarma.REPOSO
+            self.tipo = NivelAlarma.NINGUNA
             self.passivate()
-        self.continuef(e)
+        else:
+            self.continuef(e)
 
     def lambdaf(self):
-        print(f"Disparando salida desde: {self.name}")
-        self.o_notificacionAlarma.add(self.tipo)
-
+        self.o_notificacionAlarma.add(self.tipo.value)

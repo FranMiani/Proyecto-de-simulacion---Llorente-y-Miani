@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import sys
 import os
-
+from parametros import Params
 # 1. Le decimos a Python que agregue la carpeta anterior al "radar" de búsqueda
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
@@ -32,13 +32,13 @@ class ActuadorDeBomba(Atomic):
 
     def deltext(self, e):
         if self.i_ajustar_caudal:
-            error = random.uniform(-0.05, 0.05) #introducimos un error de entre -5% y 5% en el actuador
+            error = Params.generar_error_actuador()
             self.caudal_objetivo = self.i_ajustar_caudal.get() * (1 + error)
     
         if self.i_detener_bomba:
             self.caudal_objetivo = 0.0  #caudal = 0 representa la bomba detenida
 
-        self.hold_in("active", 0.5) #0.5 segundos de latencia
+        self.hold_in("active", Params.ACTUADOR_LATENCIA)
 
     def lambdaf(self):        
         print(f"Disparando salida desde: {self.name}")

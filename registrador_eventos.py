@@ -44,7 +44,6 @@ class RegistradorEventos(Atomic):
         pass
 
     def deltint(self):
-        self.reloj_global += self.sigma
         self.mensaje = ""
         self.passivate()
 
@@ -91,12 +90,7 @@ class RegistradorEventos(Atomic):
         
             self.hold_in("active", 0.0)
         
-        else:
-            # Equivalente a: case s = (mensaje, sigma - e)
-            if self.sigma != float('inf'):
-                self.sigma -= e
-                self.hold_in("active", self.sigma)
-
+        
     def lambdaf(self):
         print(f"Disparando salida desde: {self.name}")
         # Equivalente a: case out = (registro, mensaje); if (mensaje != " ")
