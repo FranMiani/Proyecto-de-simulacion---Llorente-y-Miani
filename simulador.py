@@ -113,7 +113,9 @@ if __name__ == '__main__':
               f"{np.min(resp_bolsa):10.2f}"
           f"{np.max(resp_bolsa):10.2f}"
           f"{np.std(resp_bolsa):10.2f}")
-
+        print("cantidad de resp_bolsa:", len(resp_bolsa))
+        print("cantidad de resp_desvio:", len(resp_desvio))
+        
     # --- ZONA DE GRÁFICOS (Matplotlib) ---
     # Creamos una figura con 2 subgráficos compartiendo el eje X (tiempo)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)

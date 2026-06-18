@@ -39,8 +39,8 @@ class Params:
     ACTUADOR_LATENCIA = 0.5
     
     # Bolsa
-    BOLSA_DURACION_MIN = 6000.0
-    BOLSA_DURACION_MAX = 20000.0
+    BOLSA_DURACION_MIN = 1000.0
+    BOLSA_DURACION_MAX = 2000.0
     
     # Controlador
     CONTROL_RETARDO_ORDEN_MIN = 0.0

@@ -73,7 +73,7 @@ class ControladorBomba(Atomic):
             self.activate()
         elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
             self.passivate()
-        elif self.sigma_bolsa == 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
+        elif self.sigma_bolsa <= 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
             self.estado_bolsa = EstadoBolsa.FINALIZANDO
             self.sigma_bolsa = Params.CONTROL_TIEMPO_PREVIO_FIN_BOLSA
             self.aux()
@@ -99,7 +99,7 @@ class ControladorBomba(Atomic):
                 self.sigma_bolsa -= e
                 self.sigma = 0.0
                 self.aux()
-                self.o_desvio_corregido.add(False)
+                self.desvio_corregido = False
                 
             if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.INFUNDIENDO] and desvio_actual <= desvio_limite:
                 if self.fase in [
@@ -155,5 +155,5 @@ class ControladorBomba(Atomic):
             self.o_alarma.add(NivelAlarma.CRITICA.value)   
         if self.fase == FaseControlador.EVALUANDO_CRITICA or self.estado_bolsa == EstadoBolsa.FINALIZANDO:
             self.o_detener_bomba.add(ComandoBomba.DETENER.value)
-        if self.sigma_bolsa == 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
+        if self.sigma_bolsa <= 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
             self.o_alarma.add(NivelAlarma.BAJA.value)
