@@ -46,11 +46,11 @@ class Params:
     CONTROL_RETARDO_ORDEN_MIN = 0.0
     CONTROL_RETARDO_ORDEN_MAX = 3.0
     CONTROL_TOLERANCIA_DESVIO = 0.10
-    CONTROL_TIEMPO_EVALUACION = 5.0
+    CONTROL_TIEMPO_EVALUACION = 10.0
     CONTROL_TIEMPO_PREVIO_FIN_BOLSA = 60.0
     @staticmethod
     def tiempo_detencion_critica(caudal_real, caudal_indicado):
-        return max(0, Params.CONTROL_TIEMPO_EVALUACION - Params.CONTROL_TIEMPO_EVALUACION * (abs(caudal_indicado - caudal_real) / caudal_indicado))
+        return max(5, Params.CONTROL_TIEMPO_EVALUACION - (Params.CONTROL_TIEMPO_EVALUACION * (abs(caudal_indicado - caudal_real) / caudal_indicado)))
     @staticmethod
     def generar_retardo_orden():
         return random.uniform(Params.CONTROL_RETARDO_ORDEN_MIN, Params.CONTROL_RETARDO_ORDEN_MAX)
