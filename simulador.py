@@ -67,6 +67,7 @@ class SistemaBombaCompleto(Coupled):
         self.add_coupling(self.enfermero.o_confirmacion, self.controlador.i_confirmacion)
         self.add_coupling(self.enfermero.o_confirmacion, self.bolsa.i_confirmacion)
         self.add_coupling(self.enfermero.o_confirmacion, self.registrador.i_confirmacion)
+        self.add_coupling(self.enfermero.o_confirmacion, self.alarma.i_confirmacionEnfermero)
         # 8. Actuador a Sensor
         self.add_coupling(self.bomba.o_caudal_actual, self.sensor.i_caudalActual)
         
