@@ -45,5 +45,5 @@ class Enfermero(Atomic):
 
 
     def lambdaf(self):
-        print(f"Disparando salida desde: {self.name}")
+        # print(f"Disparando salida desde: {self.name}")
         self.o_confirmacion.add("")

@@ -41,7 +41,7 @@ class ActuadorDeBomba(Atomic):
         self.hold_in("active", Params.ACTUADOR_LATENCIA)
 
     def lambdaf(self):        
-        print(f"Disparando salida desde: {self.name}")
+        # print(f"Disparando salida desde: {self.name}")
         self.o_caudal_actual.add(self.caudal_objetivo)
 
         

@@ -31,5 +31,5 @@ class SensorDeFlujo(Atomic):
         self.continuef(e)
 
     def lambdaf(self):
-        print(f"Disparando salida desde: {self.name}")
+        # print(f"Disparando salida desde: {self.name}")
         self.o_sensorFlujo.add(self.caudal_medido)

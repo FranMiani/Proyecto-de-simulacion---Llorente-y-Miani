@@ -8,6 +8,8 @@ ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Atomic, Port
 class RegistradorEventos(Atomic):
+    alarmas = 0
+    confirmaciones = 0
     def __init__(self, name="RegistradorEventos"):
         super().__init__(name)
 
@@ -83,6 +85,8 @@ class RegistradorEventos(Atomic):
             self.hold_in("active", 0.0)
 
         if self.i_alarma:
+            self.alarmas += 1
+            print("alarmas", self.alarmas)
             nivel = self.i_alarma.get()
             self.mensaje = f"Alarma: {nivel}"
 
@@ -109,8 +113,9 @@ class RegistradorEventos(Atomic):
             self.hold_in("active", 0.0)
 
         if self.i_confirmacion:
+            print("confirmaciones", self.confirmaciones)
+            self.confirmaciones += 1
             if self.t_ultima_alarma_baja is not None:
-        
                 tiempo = (self.reloj_global - self.t_ultima_alarma_baja)
                 self.tiempos_respuesta_bolsa.append(tiempo)
                 self.t_ultima_alarma_baja = None
@@ -124,7 +129,7 @@ class RegistradorEventos(Atomic):
         
         
     def lambdaf(self):
-        print(f"Disparando salida desde: {self.name}")
+        # print(f"Disparando salida desde: {self.name}")
         # Equivalente a: case out = (registro, mensaje); if (mensaje != " ")
         if self.mensaje != "":
             self.o_registro.add(self.mensaje)

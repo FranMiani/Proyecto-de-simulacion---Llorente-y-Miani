@@ -40,5 +40,5 @@ class GeneradorOrdenesMedicas(Atomic):
         pass
 
     def lambdaf(self):
-        print(f"Disparando salida desde: {self.name}")
+        # print(f"Disparando salida desde: {self.name}")
         self.o_caudal.add(self.caudal_indicado)
