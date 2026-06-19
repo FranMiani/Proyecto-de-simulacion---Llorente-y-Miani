@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # Ejecutamos la simulación
     print("--- INICIANDO SIMULACIÓN ---")
     coordinador.initialize()
-    coordinador.simulate_time(10000) 
+    coordinador.simulate_time(20000) 
     print("--- SIMULACIÓN FINALIZADA ---")
 
     # Extraemos las listas de datos guardadas en el Registrador

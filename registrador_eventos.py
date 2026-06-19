@@ -64,7 +64,7 @@ class RegistradorEventos(Atomic):
     def deltext(self, e):
         self.reloj_global += e
 
-        # Evaluamos qué puerto trajo el evento (siguiendo el estilo de tu Controlador)
+        # Evaluamos qué puerto trajo el evento 
         if self.i_ajustar_caudal:
             valor = self.i_ajustar_caudal.get()
             self.mensaje = f"Ajuste de caudal a: {valor}"

@@ -40,8 +40,8 @@ class ControladorBomba(Atomic):
         self.estado_bolsa = EstadoBolsa.ACEPTABLE
         self.caudal_indicado = 0.0
         self.caudal_real = 0.0
-        self.sigma_bolsa = 0.0
-        self.sigma = 0.0
+        self.sigma_bolsa = float('inf')
+        self.sigma = float('inf')
         self.desvio_corregido = False
         
     def initialize(self):

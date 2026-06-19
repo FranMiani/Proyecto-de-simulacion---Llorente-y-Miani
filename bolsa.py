@@ -24,17 +24,17 @@ class Bolsa(Atomic):
         pass
 
     def deltint(self):
-        self.sigma = float('inf')
+        self.duracionBolsa = float('inf')
         self.passivate()
 
     def deltext(self, e):
         if self.i_confirmacion:
-            if(self.sigma != float('inf')):
-                self.sigma -= e
+            if(self.duracionBolsa != float('inf')):
+                self.duracionBolsa -= e
                 self.continuef(e)
             else:
                 self.duracionBolsa = Params.generar_duracion_bolsa()
-                print("sigma", self.sigma)
+                print("duracionBolsa", self.duracionBolsa)
                 self.hold_in("active", self.duracionBolsa)
 
     def lambdaf(self):
