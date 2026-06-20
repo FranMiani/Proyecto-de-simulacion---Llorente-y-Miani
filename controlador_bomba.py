@@ -9,10 +9,9 @@ from parametros import FaseControlador, EstadoBolsa, NivelAlarma, ComandoBomba, 
 
 class ControladorBomba(Atomic):
     def aux(self):
-        if (self.estado_bolsa != EstadoBolsa.FINALIZANDO) :
-            self.hold_in("active", min(self.sigma, self.sigma_bolsa))
-        else :
-            self.passivate()
+        tiempo_proximo = min(self.sigma, self.sigma_bolsa)
+        self.hold_in("active", tiempo_proximo)
+
 
     def __init__(self, name="ControladorBomba"):
         super().__init__(name)
@@ -61,38 +60,51 @@ class ControladorBomba(Atomic):
         if self.sigma_bolsa != float('inf'):
             self.sigma_bolsa -= e
 
-        if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado > 0 and self.sigma_bolsa > 0:
-            self.fase = FaseControlador.INFUNDIENDO
-            self.sigma = float('inf')
-            
-        elif self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado == 0:
-            self.fase = FaseControlador.ESPERANDO
-            self.sigma = float('inf')
-            
-            
-        elif self.fase == FaseControlador.DESVIADO and self.sigma_bolsa > 0:
-            self.fase = FaseControlador.EVALUANDO_DESVIO
-            self.sigma = 0.0
-            
-        elif self.fase == FaseControlador.EVALUANDO_DESVIO and self.sigma_bolsa > 0:
-            self.fase = FaseControlador.EVALUANDO_CRITICA
-            self.sigma = Params.tiempo_detencion_critica(self.caudal_real, self.caudal_indicado)    
-            
-        elif self.fase == FaseControlador.EVALUANDO_CRITICA and self.sigma_bolsa > 0:
-            self.fase = FaseControlador.DETENIDO_POR_CRITICA
-            self.activate()
-        elif self.fase == FaseControlador.DETENIDO_POR_CRITICA and self.sigma_bolsa > 0:
-            self.sigma = float('inf')
-            self.sigma_bolsa = float('inf')
-        elif self.sigma_bolsa <= 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
-            self.estado_bolsa = EstadoBolsa.FINALIZANDO
-            self.sigma_bolsa = Params.CONTROL_TIEMPO_PREVIO_FIN_BOLSA
-            
-        elif self.estado_bolsa == EstadoBolsa.FINALIZANDO:
-            self.fase = FaseControlador.ESPERANDO
-            self.estado_bolsa = EstadoBolsa.VACIA
-            self.sigma = float('inf')
-            self.sigma_bolsa = float('inf')
+        # --- PRIORIDAD 1: LA BOLSA ---
+        if self.sigma_bolsa == min(self.sigma, self.sigma_bolsa):
+            print("deltaint bolsa")
+            if self.estado_bolsa == EstadoBolsa.ACEPTABLE:
+                print("iniciando conteo")
+                self.estado_bolsa = EstadoBolsa.FINALIZANDO
+                self.sigma_bolsa = Params.CONTROL_TIEMPO_PREVIO_FIN_BOLSA
+                
+            elif self.estado_bolsa == EstadoBolsa.FINALIZANDO:
+                print("fin bolsa")
+                self.fase = FaseControlador.ESPERANDO
+                self.estado_bolsa = EstadoBolsa.VACIA
+                self.sigma = float('inf') 
+                self.sigma_bolsa = float('inf')
+
+        # --- PRIORIDAD 2: LAS FASES ---
+        elif self.sigma == min(self.sigma, self.sigma_bolsa):
+            if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado > 0:
+                self.fase = FaseControlador.INFUNDIENDO
+                self.sigma = float('inf')
+                
+            elif self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado == 0:
+                self.fase = FaseControlador.ESPERANDO
+                self.sigma = float('inf')
+                
+            elif self.fase == FaseControlador.DESVIADO:
+                self.fase = FaseControlador.EVALUANDO_DESVIO
+                self.sigma = 0.0
+                
+            elif self.fase == FaseControlador.EVALUANDO_DESVIO:
+                self.fase = FaseControlador.EVALUANDO_CRITICA
+                
+                self.sigma = Params.tiempo_detencion_critica(self.caudal_real, self.caudal_indicado)    
+                
+            elif self.fase == FaseControlador.EVALUANDO_CRITICA:
+                print("llegue aca")
+                self.fase = FaseControlador.DETENIDO_POR_CRITICA
+                self.sigma = 0.0
+                
+            elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
+                self.sigma = float('inf')
+            elif self.fase == FaseControlador.INFUNDIENDO or self.fase == FaseControlador.ESPERANDO:
+                self.sigma = float('inf')
+
+
         self.aux()
 
     def deltext(self, e):
@@ -101,24 +113,26 @@ class ControladorBomba(Atomic):
         if self.sigma_bolsa != float('inf'):
             self.sigma_bolsa -= e
         
-        if self.i_orden_medica:
-            self.fase = FaseControlador.PROCESANDO_ORDEN
-            self.sigma = Params.generar_retardo_orden()
-            self.caudal_indicado = self.i_orden_medica.get()
+        if self.i_orden_medica :
+            if self.fase != FaseControlador.DETENIDO_POR_CRITICA and self.estado_bolsa != EstadoBolsa.VACIA:
+                self.fase = FaseControlador.PROCESANDO_ORDEN
+                self.sigma = Params.generar_retardo_orden()
             
+            self.caudal_indicado = self.i_orden_medica.get()
+
             
         elif self.i_sensor_flujo:
             desvio_limite = Params.CONTROL_TOLERANCIA_DESVIO * self.caudal_indicado
             desvio_actual = abs(self.i_sensor_flujo.get() - self.caudal_indicado)
             
-            if self.fase == FaseControlador.INFUNDIENDO and desvio_actual > desvio_limite:
+            if self.fase == FaseControlador.INFUNDIENDO and desvio_actual > desvio_limite and self.estado_bolsa != EstadoBolsa.VACIA:
                 self.fase = FaseControlador.DESVIADO
                 
                 self.sigma = 5.0
                 
                 self.desvio_corregido = False
                 
-            if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.DESVIADO] and desvio_actual <= desvio_limite:    
+            if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.DESVIADO] and desvio_actual <= desvio_limite and self.estado_bolsa != EstadoBolsa.VACIA:    
                 self.desvio_corregido = True
                 
                 self.fase = FaseControlador.INFUNDIENDO
@@ -129,15 +143,16 @@ class ControladorBomba(Atomic):
                 
                 
         elif self.i_fin_bolsa:
+            self.i_fin_bolsa.get()  # Solo para consumir el evento, no nos importa su valor
             self.sigma_bolsa = 0.0
+            print("Evento: Fin de bolsa detectado por el controlador.")
             
             
         elif self.i_confirmacion:
             self.fase = FaseControlador.PROCESANDO_ORDEN
             self.estado_bolsa = EstadoBolsa.ACEPTABLE
             self.sigma_bolsa = float('inf')
-            self.sigma = float('inf')
-            self.activate()
+            self.sigma = 0.0
                 
         self.aux()
             
@@ -145,19 +160,36 @@ class ControladorBomba(Atomic):
             
 
     def lambdaf(self):
+        # Identificadores de evento (¿Quién llegó a cero?)
+        evento_bolsa = (self.sigma_bolsa != float('inf') and min(self.sigma, self.sigma_bolsa) == self.sigma_bolsa)
+        evento_fase = (self.sigma != float('inf') and min(self.sigma, self.sigma_bolsa) == self.sigma)
+
+        # El desvío corregido va por un puerto separado, no interfiere
         if self.desvio_corregido:
             self.o_desvio_corregido.add(True)
-        if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado > 0:
-            self.o_ajustar_caudal.add(float(self.caudal_indicado))
-        elif self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado == 0:
-            self.o_detener_bomba.add(ComandoBomba.DETENER.value) # .value extrae el string
-        elif self.fase == FaseControlador.DESVIADO:
-            self.o_alarma.add(NivelAlarma.MEDIA.value)
-        elif self.fase == FaseControlador.EVALUANDO_DESVIO:
-            self.o_ajustar_caudal.add(self.caudal_indicado)  
-        elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
-            self.o_alarma.add(NivelAlarma.CRITICA.value)   
-        elif (self.fase == FaseControlador.EVALUANDO_CRITICA and self.sigma != float('inf')) or (self.estado_bolsa == EstadoBolsa.FINALIZANDO and self.sigma != float('inf')):
-            self.o_detener_bomba.add(ComandoBomba.DETENER.value)
-        elif self.sigma_bolsa <= 0 and self.estado_bolsa == EstadoBolsa.ACEPTABLE:
-            self.o_alarma.add(NivelAlarma.BAJA.value)
+            
+        # --- PRIORIDAD 1: LA BOLSA (Física) ---
+        if evento_bolsa:
+            if self.estado_bolsa == EstadoBolsa.FINALIZANDO:
+                self.o_detener_bomba.add(ComandoBomba.DETENER.value)
+                print("orden detener")
+            elif self.estado_bolsa == EstadoBolsa.ACEPTABLE:
+                self.o_alarma.add(NivelAlarma.BAJA.value)
+                
+        # --- PRIORIDAD 2: LAS FASES (Lógica) ---
+        # Solo emiten si la bolsa no se adueñó del instante de tiempo
+        elif evento_fase:
+            if self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado > 0:
+                self.o_ajustar_caudal.add(float(self.caudal_indicado))
+                
+            elif (self.fase == FaseControlador.PROCESANDO_ORDEN and self.caudal_indicado == 0) or self.fase == FaseControlador.EVALUANDO_CRITICA:
+                self.o_detener_bomba.add(ComandoBomba.DETENER.value)
+                
+            elif self.fase == FaseControlador.DESVIADO:
+                self.o_alarma.add(NivelAlarma.MEDIA.value)
+                
+            elif self.fase == FaseControlador.EVALUANDO_DESVIO:
+                self.o_ajustar_caudal.add(self.caudal_indicado)  
+                
+            elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
+                self.o_alarma.add(NivelAlarma.CRITICA.value)

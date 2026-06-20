@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import os
-from parametros import NivelAlarma
+from parametros import NivelAlarma, Params
 import numpy as np
 
 ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -71,7 +71,58 @@ class SistemaBombaCompleto(Coupled):
         # 8. Actuador a Sensor
         self.add_coupling(self.bomba.o_caudal_actual, self.sensor.i_caudalActual)
         
+
+def calcular_porcentaje_correcto(t_ind, v_ind, t_real, v_real, tiempo_fin):
+    """
+    Une las dos líneas de tiempo (indicado y real) y calcula segundo a segundo
+    si la bomba estuvo infundiendo dentro de la tolerancia permitida.
+    """
+    # 1. Juntamos TODOS los eventos en una sola lista y los etiquetamos
+    eventos = []
+    for t, v in zip(t_ind, v_ind):
+        eventos.append((t, 'indicado', v))
+    for t, v in zip(t_real, v_real):
+        eventos.append((t, 'real', v))
+    
+    # Le agregamos una marca final artificial para calcular el último tramo
+    eventos.append((tiempo_fin, 'fin', 0))
+    
+    # 2. Ordenamos cronológicamente (de T=0 hasta T=Fin)
+    eventos.sort(key=lambda x: x[0])
+
+    tiempo_total_infundiendo = 0.0
+    tiempo_correcto = 0.0
+    
+    caudal_ind_actual = 0.0
+    caudal_real_actual = 0.0
+    tiempo_anterior = 0.0
+
+    # 3. Recorremos la línea de tiempo paso a paso calculando el delta (diferencia)
+    for tiempo_actual, tipo, valor in eventos:
+        delta_t = tiempo_actual - tiempo_anterior
+
+        # Si la bomba debía estar encendida (caudal indicado > 0)
+        if caudal_ind_actual > 0 and delta_t > 0:
+            tiempo_total_infundiendo += delta_t
+            
+            # Calculamos si el caudal real estaba dentro de la tolerancia (10%)
+            margen_tolerancia = caudal_ind_actual * Params.ACEPTACION_DESVIO
+            if abs(caudal_real_actual - caudal_ind_actual) <= margen_tolerancia:
+                tiempo_correcto += delta_t
+
+        # 4. Actualizamos el "estado actual" de los caudales para la próxima iteración
+        if tipo == 'indicado':
+            caudal_ind_actual = valor
+        elif tipo == 'real':
+            caudal_real_actual = valor
+            
+        tiempo_anterior = tiempo_actual
+
+    # 5. Calculamos el porcentaje final (evitando dividir por cero si la bomba nunca arrancó)
+    if tiempo_total_infundiendo == 0:
+        return 0.0
         
+    return (tiempo_correcto / tiempo_total_infundiendo) * 100.0
 
 
 if __name__ == '__main__':
@@ -82,7 +133,7 @@ if __name__ == '__main__':
     # Ejecutamos la simulación
     print("--- INICIANDO SIMULACIÓN ---")
     coordinador.initialize()
-    coordinador.simulate_time(10000) 
+    coordinador.simulate_time(Params.TIEMPO_SIMULACION) 
     print("--- SIMULACIÓN FINALIZADA ---")
 
     # Extraemos las listas de datos guardadas en el Registrador
@@ -98,7 +149,16 @@ if __name__ == '__main__':
     
     resp_desvio = modelo_top.registrador.tiempos_respuesta_desvio
     resp_bolsa = modelo_top.registrador.tiempos_respuesta_bolsa
-
+    porcentaje_ok = calcular_porcentaje_correcto(
+            t_indicado, v_indicado, 
+            t_real, v_real, 
+            Params.TIEMPO_SIMULACION
+        )
+        
+    print("\n============= MÉTRICAS GLOBALES =============")
+    print(f"Cantidad de detenciones de bomba: {modelo_top.registrador.contador_detenciones}")
+    print(f"Tiempo con infusión en rango óptimo: {porcentaje_ok:.2f}%")
+    
     if resp_desvio and resp_bolsa:
         print("\n================ RESUMEN ================")
         print(f"{'Evento':<20}{'Media':>10}{'Min':>10}{'Max':>10}{'Std':>10}")
@@ -166,3 +226,5 @@ if __name__ == '__main__':
     plt.legend()
     
     plt.show()
+
+    

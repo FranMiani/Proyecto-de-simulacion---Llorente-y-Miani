@@ -19,7 +19,7 @@ class ModuloAlarmas(Atomic):
         self.tipo = NivelAlarma.NINGUNA
 
     def initialize(self):
-        self.passivate()
+        self.hold_in("active", float('inf'))
 
     def exit(self): pass
 
@@ -27,7 +27,7 @@ class ModuloAlarmas(Atomic):
         if self.fase == FaseAlarma.NOTIFICAR_NUEVA and self.tipo != NivelAlarma.CRITICA:
             self.fase = FaseAlarma.REPOSO
             self.tipo = NivelAlarma.NINGUNA
-            self.passivate()
+            self.hold_in("active", float('inf'))
         elif self.fase == FaseAlarma.NOTIFICAR_NUEVA and self.tipo == NivelAlarma.CRITICA:
             self.fase = FaseAlarma.ESPERANDO_30
             self.hold_in("active", Params.ALARMA_ESPERA_INICIAL)
@@ -45,9 +45,7 @@ class ModuloAlarmas(Atomic):
         elif self.i_confirmacionEnfermero:
             self.fase = FaseAlarma.REPOSO
             self.tipo = NivelAlarma.NINGUNA
-            self.passivate()
-        else:
-            self.continuef(e)
+            self.hold_in("active", float('inf'))
 
     def lambdaf(self):
         self.o_notificacionAlarma.add(self.tipo.value)

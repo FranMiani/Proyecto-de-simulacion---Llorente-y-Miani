@@ -42,7 +42,7 @@ class RegistradorEventos(Atomic):
         self.historial_valores_alarma = []
         self.historial_tiempos_caudal_real = []
         self.historial_valores_caudal_real = []
-        
+        self.contador_detenciones = 0
         self.t_ultima_alarma_media = None
         self.tiempos_respuesta_desvio = []
         self.t_ultima_alarma_baja = None
@@ -77,7 +77,7 @@ class RegistradorEventos(Atomic):
 
         if self.i_detener_bomba:
             self.mensaje = "Detencion de bomba"
-            
+            self.contador_detenciones += 1
             # Si se detiene la bomba, el caudal cae a cero
             self.historial_tiempos_caudal.append(self.reloj_global)
             self.historial_valores_caudal.append(0.0)

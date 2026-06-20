@@ -19,18 +19,21 @@ class Enfermero(Atomic):
         self.sigma = float('inf')
 
     def initialize(self):
-        self.passivate()
+        self.hold_in("active", self.sigma)
 
     def exit(self):
         pass
 
     def deltint(self):
         self.sigma = float('inf')
-        self.passivate()
+        self.hold_in("active", self.sigma)
 
     def deltext(self, e):
         if self.i_notificacionAlarma:
             alarma = self.i_notificacionAlarma.get()
+            if alarma == "CRITICA":
+                print("alarma critica recibida")
+                
             if alarma=="BAJA" and self.sigma== float('inf'):
                 self.sigma = Params.generar_tiempo_enfermero_baja()
             elif alarma=="CRITICA" and self.sigma== float('inf'):
