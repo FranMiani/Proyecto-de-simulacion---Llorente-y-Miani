@@ -177,6 +177,21 @@ if __name__ == '__main__':
         print("cantidad de resp_bolsa:", len(resp_bolsa))
         print("cantidad de resp_desvio:", len(resp_desvio))
         
+    cant_bajas = sum(1 for a in v_alarma if a == "BAJA")
+    cant_medias = sum(1 for a in v_alarma if a == "MEDIA")
+    cant_criticas = sum(1 for a in v_alarma if a == "CRITICA")
+        
+    print(f"Alarmas bajas: {cant_bajas}")
+    print(f"Alarmas medias: {cant_medias}")
+    print(f"Alarmas críticas: {cant_criticas}")
+
+    with open("traza.txt", "w") as f:
+        f.write("Tiempo\tEvento\n")
+        f.write("-----------------------------\n")
+    
+        for t, evento in modelo_top.registrador.traza:
+            f.write(f"{t:10.2f}\t{evento}\n")
+    
     # --- ZONA DE GRÁFICOS (Matplotlib) ---
     # Creamos una figura con 2 subgráficos compartiendo el eje X (tiempo)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)

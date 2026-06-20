@@ -8,8 +8,13 @@ ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(ruta_padre)
 from xdevs.models import Atomic, Port
 class RegistradorEventos(Atomic):
+    
     alarmas = 0
     confirmaciones = 0
+    def agregar_traza(self, evento):
+        if evento != "": 
+            self.traza.append((self.reloj_global, evento))
+
     def __init__(self, name="RegistradorEventos"):
         super().__init__(name)
 
@@ -47,6 +52,7 @@ class RegistradorEventos(Atomic):
         self.tiempos_respuesta_desvio = []
         self.t_ultima_alarma_baja = None
         self.tiempos_respuesta_bolsa = []
+        self.traza = []
         
 
     def initialize(self):
@@ -72,6 +78,8 @@ class RegistradorEventos(Atomic):
             # Guardamos el dato crudo para el gráfico
             self.historial_tiempos_caudal.append(self.reloj_global)
             self.historial_valores_caudal.append(valor)
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
             
             self.hold_in("active", 0.0) # Transición inmediata (sigma = 0)
 
@@ -81,6 +89,9 @@ class RegistradorEventos(Atomic):
             # Si se detiene la bomba, el caudal cae a cero
             self.historial_tiempos_caudal.append(self.reloj_global)
             self.historial_valores_caudal.append(0.0)
+            
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
             
             self.hold_in("active", 0.0)
 
@@ -100,6 +111,9 @@ class RegistradorEventos(Atomic):
             self.historial_tiempos_alarma.append(self.reloj_global)
             self.historial_valores_alarma.append(nivel)
             
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
+            
             self.hold_in("active", 0.0)
 
         if self.i_caudal_real:
@@ -109,7 +123,10 @@ class RegistradorEventos(Atomic):
             self.historial_valores_caudal_real.append(valor)
         
             self.mensaje = f"Caudal real: {valor}"
-        
+
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
+            
             self.hold_in("active", 0.0)
 
         if self.i_confirmacion:
@@ -119,13 +136,19 @@ class RegistradorEventos(Atomic):
                 tiempo = (self.reloj_global - self.t_ultima_alarma_baja)
                 self.tiempos_respuesta_bolsa.append(tiempo)
                 self.t_ultima_alarma_baja = None
-                
+
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
+            
         if self.i_desvio_corregido:
             if self.t_ultima_alarma_media is not None:
 
                 tiempo = (self.reloj_global - self.t_ultima_alarma_media)
                 self.tiempos_respuesta_desvio.append(tiempo)
                 self.t_ultima_alarma_media = None
+
+            # Guardamos el evento en la traza de ejecucion
+            self.agregar_traza(self.mensaje)
         
         
     def lambdaf(self):

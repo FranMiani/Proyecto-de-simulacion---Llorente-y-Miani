@@ -33,7 +33,7 @@ class ComandoBomba(Enum):
 
 # --- PARÁMETROS NUMÉRICOS DEL SISTEMA ---
 class Params:
-    TIEMPO_SIMULACION = 5000.0
+    TIEMPO_SIMULACION = 10000.0
     ACEPTACION_DESVIO = 0.10
     # Actuador
     ACTUADOR_ERROR_MIN = -0.15
