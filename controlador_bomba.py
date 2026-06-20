@@ -98,6 +98,9 @@ class ControladorBomba(Atomic):
                 print("llegue aca")
                 self.fase = FaseControlador.DETENIDO_POR_CRITICA
                 self.sigma = 0.0
+            elif self.fase == FaseControlador.DESVIO_CORREGIDO:
+                self.fase = FaseControlador.INFUNDIENDO
+                self.sigma = float('inf')
                 
             elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
                 self.sigma = float('inf')
@@ -135,7 +138,7 @@ class ControladorBomba(Atomic):
             if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.DESVIADO] and desvio_actual <= desvio_limite and self.estado_bolsa != EstadoBolsa.VACIA:    
                 self.desvio_corregido = True
                 
-                self.fase = FaseControlador.INFUNDIENDO
+                self.fase = FaseControlador.DESVIO_CORREGIDO
                 self.sigma = float('inf')
                 
             ##if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.DESVIADO] and desvio_actual > desvio_limite:
@@ -164,9 +167,6 @@ class ControladorBomba(Atomic):
         evento_bolsa = (self.sigma_bolsa != float('inf') and min(self.sigma, self.sigma_bolsa) == self.sigma_bolsa)
         evento_fase = (self.sigma != float('inf') and min(self.sigma, self.sigma_bolsa) == self.sigma)
 
-        # El desvío corregido va por un puerto separado, no interfiere
-        if self.desvio_corregido:
-            self.o_desvio_corregido.add(True)
             
         # --- PRIORIDAD 1: LA BOLSA (Física) ---
         if evento_bolsa:
@@ -193,3 +193,5 @@ class ControladorBomba(Atomic):
                 
             elif self.fase == FaseControlador.DETENIDO_POR_CRITICA:
                 self.o_alarma.add(NivelAlarma.CRITICA.value)
+            elif self.fase == FaseControlador.DESVIO_CORREGIDO:
+                self.o_desvio_corregido.add(True)
