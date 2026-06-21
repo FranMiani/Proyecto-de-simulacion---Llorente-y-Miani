@@ -31,9 +31,7 @@ class Enfermero(Atomic):
     def deltext(self, e):
         if self.i_notificacionAlarma:
             alarma = self.i_notificacionAlarma.get()
-            if alarma == "CRITICA":
-                print("alarma critica recibida")
-                
+
             if alarma=="BAJA" and self.sigma== float('inf'):
                 self.sigma = Params.generar_tiempo_enfermero_baja()
             elif alarma=="CRITICA" and self.sigma== float('inf'):
