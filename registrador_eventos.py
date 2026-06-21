@@ -130,25 +130,36 @@ class RegistradorEventos(Atomic):
             self.hold_in("active", 0.0)
 
         if self.i_confirmacion:
+            _ = self.i_confirmacion.get() # Consumimos el evento
             print("confirmaciones", self.confirmaciones)
             self.confirmaciones += 1
+            
             if self.t_ultima_alarma_baja is not None:
                 tiempo = (self.reloj_global - self.t_ultima_alarma_baja)
                 self.tiempos_respuesta_bolsa.append(tiempo)
                 self.t_ultima_alarma_baja = None
 
-            # Guardamos el evento en la traza de ejecucion
+            # 1. Definimos el mensaje
+            self.mensaje = "Confirmacion de enfermero"
+            # 2. Lo guardamos en la traza
             self.agregar_traza(self.mensaje)
+            # 3. Forzamos la transición
+            self.hold_in("active", 0.0)
             
         if self.i_desvio_corregido:
+            _ = self.i_desvio_corregido.get() # Consumimos el evento
+            
             if self.t_ultima_alarma_media is not None:
-
                 tiempo = (self.reloj_global - self.t_ultima_alarma_media)
                 self.tiempos_respuesta_desvio.append(tiempo)
                 self.t_ultima_alarma_media = None
 
-            # Guardamos el evento en la traza de ejecucion
+            # 1. Definimos el mensaje
+            self.mensaje = "Desvio corregido"
+            # 2. Lo guardamos en la traza
             self.agregar_traza(self.mensaje)
+            # 3. Forzamos la transición
+            self.hold_in("active", 0.0)
         
         
     def lambdaf(self):

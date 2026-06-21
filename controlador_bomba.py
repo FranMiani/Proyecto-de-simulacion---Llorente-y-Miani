@@ -64,13 +64,6 @@ class ControladorBomba(Atomic):
         if self.sigma_bolsa == min(self.sigma2, self.sigma_bolsa):
             print("deltaint bolsa")
             if self.estado_bolsa == EstadoBolsa.ACEPTABLE:
-                print(
-                    f"DELTINT fase={self.fase} "
-                    f"estado_bolsa={self.estado_bolsa} "
-                    f"sigma={self.sigma2} "
-                    f"sigma_bolsa={self.sigma_bolsa}"
-                )
-                print("iniciando conteo")
                 self.estado_bolsa = EstadoBolsa.FINALIZANDO
                 self.sigma_bolsa = Params.CONTROL_TIEMPO_PREVIO_FIN_BOLSA
                 
@@ -145,25 +138,15 @@ class ControladorBomba(Atomic):
                 self.desvio_corregido = True
                 
                 self.fase = FaseControlador.DESVIO_CORREGIDO
-                self.sigma2 = float('inf')
+                self.sigma2 = 0.0
                 
             ##if self.fase in [FaseControlador.EVALUANDO_CRITICA, FaseControlador.EVALUANDO_DESVIO, FaseControlador.DESVIADO] and desvio_actual > desvio_limite:
               ##nothing, se mantiene en su fase actual esperando a ver si se corrige o empeora el desvío   
                 
                 
         elif self.i_fin_bolsa:
-            print(
-                f"ANTES FIN_BOLSA: fase={self.fase}, "
-                f"sigma={self.sigma2}, sigma_bolsa={self.sigma_bolsa}"
-            )
-
             self.i_fin_bolsa.get()
             self.sigma_bolsa = 0.0
-
-            print(
-                f"DESPUES FIN_BOLSA: fase={self.fase}, "
-                f"sigma={self.sigma2}, sigma_bolsa={self.sigma_bolsa}"
-            )
             
             
         elif self.i_confirmacion:
