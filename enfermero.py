@@ -34,6 +34,8 @@ class Enfermero(Atomic):
 
             if alarma=="BAJA" and self.sigma== float('inf'):
                 self.sigma = Params.generar_tiempo_enfermero_baja()
+            elif alarma=="BAJA" and self.sigma!= float('inf'):
+                self.sigma = min(self.sigma - e, Params.generar_tiempo_enfermero_baja())
             elif alarma=="CRITICA" and self.sigma== float('inf'):
                 self.sigma = Params.generar_tiempo_enfermero_critica()
             elif alarma=="CRITICA" and self.sigma != float('inf'):
