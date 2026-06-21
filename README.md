@@ -20,7 +20,11 @@ python3 -m venv venv
 ```
 - Activar el entorno virtual:
 ```bash
-python3 source/bin/activate
+source venv/bin/activate
+```
+- Activar el entorno virtual en windows:
+```bash
+ venv\Scripts\activate
 ```
 - Instalar las dependencias:
 ```bash
@@ -30,5 +34,6 @@ pip install -r requirements.txt
 ```bash
 python3 simulador.py
 ```
-### Nota: a traves del archivo parametros.py se pueden modificar los valores de entrada para el sistema de simulacion.
+### Al ejecutar simulador.py se desplegará un menú interactivo por consola que permite modificar fácilmente ciertos parámetros clave de la simulación (como el tiempo total, errores del actuador y demoras del personal).
+### Nota: a traves del archivo parametros.py se pueden modificar todos los valores base y límites de entrada para el sistema de simulación, ademas de las funciones que generan valores de gran importancia en la simulacion.
 ### La traza de simulacion de cada ejecucion se guarda en un archivo traza.txt

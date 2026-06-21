@@ -1,8 +1,4 @@
 import random
-import sys
-import os
-ruta_padre = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(ruta_padre)
 from xdevs.models import Atomic, Port
 # Importamos nuestros parámetros
 from parametros import FaseControlador, EstadoBolsa, NivelAlarma, ComandoBomba, Params
