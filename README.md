@@ -1,4 +1,4 @@
-# Proyecto-de-simulacion. Mateo Llorente y Francisco Miani
+# Proyecto de simulacion. Mateo Llorente y Francisco Miani
 
 Simulacion de una bomba de infusion utilizando el formalismo DEVS e implementada en Python mediante la biblioteca xdevs.py
 
